@@ -77,8 +77,24 @@ void main(void) {
 <script id="shader-phong-phong-vs" type="x-shader/x-vertex">
 
 #version 300 es
+(
+in vec3 aVertexNormal;
+in vec3 aVertexPosition;
 
+uniform mat4 uMVMatrix;
+uniform mat4 uPMatrix;
 
+out vec3 vVertexNormal;
+out vec4 vVertexPosition;
+
+void main(void) {
+
+  // Get the vertex position in eye coordinates
+  vVertexPosition = uMVMatrix*vec4(aVertexPosition, 1.0);
+  vVertexNormal = aVertexNormal;
+
+  gl_Position = uPMatrix*uMVMatrix*vec4(aVertexPosition, 1.0);
+}
    
 </script>
     
