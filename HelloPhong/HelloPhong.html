@@ -5,8 +5,7 @@
     <meta charset="utf-8" />
   </head>
 
-  <script id="shader-gouraud-phong-vs" type="x-shader/x-vertex">
-    #version 300 es
+  <script id="shader-gouraud-phong-vs" type="x-shader/x-vertex">#version 300 es
 
     in vec3 aVertexNormal;
     in vec3 aVertexPosition;
@@ -62,8 +61,7 @@
     }
   </script>
 
-  <script id="shader-gouraud-phong-fs" type="x-shader/x-fragment">
-    #version 300 es
+  <script id="shader-gouraud-phong-fs" type="x-shader/x-fragment">#version 300 es
 
     precision mediump float;
     in vec4 vColor;
@@ -74,9 +72,7 @@
     }
   </script>
 
-  <script id="shader-phong-phong-vs" type="x-shader/x-vertex">
-
-    #version 300 es
+  <script id="shader-phong-phong-vs" type="x-shader/x-vertex">#version 300 es
 
     in vec3 aVertexNormal;
     in vec3 aVertexPosition;
@@ -97,9 +93,55 @@
     }
   </script>
 
-  <script id="shader-phong-phong-fs" type="x-shader/x-fragment">
+  <script id="shader-phong-phong-fs" type="x-shader/x-fragment">#version 300 es
 
-    #version 300 es
+    precision highp float;
+
+    in vec3 vVertexNormal;
+    in vec4 vVertexPosition;
+
+    uniform mat3 uNMatrix;
+    uniform vec3 uLightPosition;
+    uniform vec3 uAmbientLightColor;
+    uniform vec3 uDiffuseLightColor;
+    uniform vec3 uSpecularLightColor;
+    uniform vec3 uAmbientMaterialColor;
+    uniform vec3 uDiffuseMaterialColor;
+    uniform vec3 uSpecularMaterialColor;
+    uniform float uShininess;
+
+    out vec4 myOutputColor;
+
+    void main (void) {
+      // Get the fragment position in eye coordinates
+      vec3 vertexPositionEye3 = vVertexPosition.xyz / vVertexPosition.w;
+
+      // Calculate the vector (l) to the light source
+      vec3 vectorToLightSource = normalize(uLightPosition - vertexPositionEye3);
+
+      // Transfer the normal (n) to eye coordinates
+      vec3 normalEye = normalize(uNMatrix * vVertexNormal);
+
+      // Calculate n dot l for diffuse lighting
+      float diffuseLightWeightning = max(dot(normalEye, vectorToLightSource), 0.0);
+
+      // Calculate the reflection vector (r) that is needed for specular light
+      vec3 reflectionVector = normalize(reflect(-vectorToLightSource, normalEye));
+
+
+      // The camera in eye coordinates is located in the origin and is pointing
+      // along the negative z-axis. Calculate viewVector (v)
+      // in eye coordinates as:
+      // (0.0, 0.0, 0.0) - vertexPositionEye3
+      vec3 viewVectorEye = -normalize(vertexPositionEye3);
+
+        float rdotv = max(dot(reflectionVector, viewVectorEye), 0.0);
+
+      float specularLightWeightning = pow(rdotv, uShininess);
+
+      // Sum up all three reflection components and send to the fragment shader
+      myOutputColor = vec4(((uAmbientLightColor*uAmbientMaterialColor) + (uDiffuseLightColor*uDiffuseMaterialColor) * diffuseLightWeightning + (uSpecularLightColor*uSpecularMaterialColor) * specularLightWeightning),1.0);
+    }
   </script>
 
   <script src="gl-matrix-min.js"></script>
@@ -113,7 +155,7 @@
     Please select which shading method to use:
     <div>
       <input type="radio" id="phong-phong" name="shader" value="phong-phong" />
-      <label for="phongphong">Phong illumination and Phong shading</label>
+      <label for="phong-phong">Phong illumination and Phong shading</label>
 
       <input
         type="radio"
